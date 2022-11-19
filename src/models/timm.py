@@ -2,6 +2,7 @@ import pytorch_lightning as pl
 import torch
 import torch.nn.functional as F
 import torchmetrics
+import wandb
 
 
 class TimmModel(pl.LightningModule):
@@ -18,7 +19,7 @@ class TimmModel(pl.LightningModule):
         self.model = model
 
         self.loss = F.cross_entropy
-        self.accuracy = torchmetrics.Accuracy()
+        self.accuracy = torchmetrics.Accuracy(num_classes=num_classes)
 
     def forward(self, x):
         # TODO: implement fastai model structure: backbone --> head so we can use self.num_classes to set the head output
@@ -35,6 +36,10 @@ class TimmModel(pl.LightningModule):
         acc = self.accuracy(preds, target)
         self.log('train_loss', loss, on_step=True, logger=True)
         self.log('train_acc', acc, on_epoch=True, logger=True)
+        self.log('conf_matrix', wandb.plot.confusion_matrix(probs=None,
+                                                            preds=preds.cpu(), y_true=target.cpu(),
+                                                            class_names=["Plantation", "Grassland",
+                                                                         "Smallholder Agriculture"]))
 
         return loss
 
@@ -48,6 +53,10 @@ class TimmModel(pl.LightningModule):
         acc = self.accuracy(preds, target)
         self.log('val_loss', loss, on_step=True, logger=True)
         self.log('val_acc', acc, on_epoch=True, logger=True)
+        self.log('conf_matrix', wandb.plot.confusion_matrix(probs=None,
+                                                            preds=preds.cpu(), y_true=target.cpu(),
+                                                            class_names=["Plantation", "Grassland",
+                                                                         "Smallholder Agriculture"]))
 
         return loss
 
@@ -65,5 +74,5 @@ class TimmModel(pl.LightningModule):
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
-        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.1)
+        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=250, gamma=0.05)
         return {"optimizer": optimizer, "lr_scheduler": scheduler}

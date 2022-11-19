@@ -20,7 +20,7 @@ def main():
         }
 
     print("Initializing DataModule...")
-    dm = ShipDataModule(root_data_dir="./data/deforest/", batch_size=8, transforms=transforms)
+    dm = ShipDataModule(root_data_dir="./data/deforest/", batch_size=8)  #transforms=transforms)
     dm.setup()
     print("Done!")
 
@@ -30,51 +30,43 @@ def main():
     # Init our model
     print("Creating Lightning Module with timm model...")
     num_classes = 3
-    timm_model = timm.create_model('densenet201', pretrained=True, num_classes=num_classes)  #https://rwightman.github.io/pytorch-image-models/
-    # TODO move finetuning to models logic
-    for param in timm_model.parameters():
-        param.requires_grad = False
-    timm_model.classifier.weight.requires_grad = True
-    timm_model.classifier.bias.requires_grad = True
-    model = TimmModel(timm_model, num_classes, learning_rate=1e-3)
+    timm_model = timm.create_model('resnet34', pretrained=True, num_classes=num_classes)  #https://rwightman.github.io/pytorch-image-models/
+    for params in timm_model.parameters():
+        params.requires_grad = False
+    timm_model.fc.weight.requires_grad = True
+    timm_model.fc.bias.requires_grad = True
+    model = TimmModel(timm_model, num_classes, learning_rate=1e-2)
     print("Done!")
 
     # Initialize wandb logger
     print("Initializing Wandb...")
-    wandb_logger = False  # WandbLogger(project='Deforestation-Classification', job_type='train')
+    wandb_logger = False #WandbLogger(project='Deforestation-Classification', job_type='train')
     print("Done!")
 
     # Initialize callbacks
     callbacks = [
-        EarlyStopping(monitor="val_loss", min_delta=0.00, patience=3, verbose=False, mode="max"),
+        #EarlyStopping(monitor="val_loss", min_delta=0.00, patience=3, verbose=False, mode="max"),
         ImagePredictionLogger(val_samples),
         ModelCheckpoint(dirpath="./checkpoints", monitor="val_loss", filename="ship-{epoch:02d}-{val_loss:.2f}")
     ]
 
     # Initialize a trainer
     print("Initializing trainer...")
-    trainer = pl.Trainer(max_steps=100,
-                         val_check_interval=10,
+    trainer = pl.Trainer(max_epochs=30,
                          gpus=1,
                          logger=wandb_logger,
                          callbacks=callbacks,
-                         enable_progress_bar=True,)
+                         enable_progress_bar=True)
     print("Done!")
 
     # Find lr
     print("Finding optimal lr...")
-    lr_find(trainer, model, dm)
+    #lr_find(trainer, model, dm)
     print("Done!")
 
     # Train the model ⚡🚅⚡
     print("Training...")
     trainer.fit(model, dm)
-    print("Done!")
-
-    # Evaluate the model on the held-out test set ⚡⚡
-    print("Testing...")
-    # TODO implement test dataset
-    #  trainer.test()
     print("Done!")
 
     # Close wandb run

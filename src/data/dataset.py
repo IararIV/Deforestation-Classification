@@ -49,6 +49,7 @@ class DeforestDataset(Dataset):
         image_metadata = self.metadata_df.iloc[idx]
         image_file = self.root_data_dir / image_metadata["images_path"]
         image = torch.tensor(np.array(Image.open(image_file)), dtype=torch.float)
+        image = (image - image.min()) / (image.max() - image.min())
         image = image.permute((2, 0, 1))
 
         target = torch.tensor(image_metadata["label"], dtype=torch.long)  # Classes [0, 1, 2]

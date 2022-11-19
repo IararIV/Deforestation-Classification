@@ -11,9 +11,11 @@ def lr_find(trainer: pl.Trainer, model, dm: pl.LightningDataModule):
     # Plot with
     fig = lr_finder.plot(suggest=True)
     fig.show()
+    fig.savefig("./lr_find.png")
 
     # Pick point based on plot, or get suggestion
     new_lr = lr_finder.suggestion()
+    print(f"Using suggested lr: {new_lr}")
 
     # update hparams of the model
     model.hparams.lr = new_lr
