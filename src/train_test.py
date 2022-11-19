@@ -8,6 +8,7 @@ from src.callbacks.callbacks import ImagePredictionLogger
 from src.data.datamodule import ShipDataModule
 from src.models.timm import TimmModel
 from src.transforms.transforms import train_transforms, valid_transforms, test_transforms
+from src.utils import lr_find
 
 
 def main():
@@ -19,7 +20,7 @@ def main():
         }
 
     print("Initializing DataModule...")
-    dm = ShipDataModule(root_data_dir="./data/deforest/", batch_size=4, transforms=transforms)
+    dm = ShipDataModule(root_data_dir="./data/deforest/", batch_size=8, transforms=transforms)
     dm.setup()
     print("Done!")
 
@@ -58,6 +59,11 @@ def main():
                          logger=wandb_logger,
                          callbacks=callbacks,
                          enable_progress_bar=True,)
+    print("Done!")
+
+    # Find lr
+    print("Finding optimal lr...")
+    lr_find(trainer, model, dm)
     print("Done!")
 
     # Train the model ⚡🚅⚡
