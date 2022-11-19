@@ -33,8 +33,8 @@ class TimmModel(pl.LightningModule):
         # training metrics
         preds = torch.argmax(logits, dim=1)
         acc = self.accuracy(preds, target)
-        self.log('train_loss', loss, on_step=True, on_epoch=True, logger=True)
-        self.log('train_acc', acc, on_step=True, on_epoch=True, logger=True)
+        self.log('train_loss', loss, on_step=True, logger=True)
+        self.log('train_acc', acc, on_epoch=True, logger=True)
 
         return loss
 
@@ -46,8 +46,8 @@ class TimmModel(pl.LightningModule):
         # validation metrics
         preds = torch.argmax(logits, dim=1)
         acc = self.accuracy(preds, target)
-        self.log('val_loss', loss, on_step=True, on_epoch=True, logger=True)
-        self.log('val_acc', acc, on_step=True, on_epoch=True, logger=True)
+        self.log('val_loss', loss, on_step=True, logger=True)
+        self.log('val_acc', acc, on_epoch=True, logger=True)
 
         return loss
 

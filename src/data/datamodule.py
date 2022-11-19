@@ -6,7 +6,7 @@ import pytorch_lightning as pl
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader
 
-from src.data.dataset import ShipDataset
+from src.data.dataset import ShipDataset, DeforestDataset
 
 
 class ShipDataModule(pl.LightningDataModule):
@@ -16,8 +16,8 @@ class ShipDataModule(pl.LightningDataModule):
         self.root_data_dir = Path(root_data_dir).resolve()
         self.batch_size = batch_size
         self.num_workers = num_workers
-        self.num_classes = 5
 
+        self.dataset = DeforestDataset  #ShipDataset
         self.transforms = transforms
 
     def prepare_data(self):
@@ -28,14 +28,14 @@ class ShipDataModule(pl.LightningDataModule):
             full_train_metadata_df = pd.read_csv(self.root_data_dir / "train.csv")
             train_metadata_df, valid_metadata_df = train_test_split(full_train_metadata_df, test_size=0.1,
                                                                     random_state=0,
-                                                                    stratify=full_train_metadata_df['category'])
+                                                                    stratify=full_train_metadata_df['label'])
 
-            self.train_ds = ShipDataset(self.root_data_dir, train_metadata_df, transforms=self.transforms["train"])
-            self.valid_ds = ShipDataset(self.root_data_dir, valid_metadata_df, transforms=self.transforms["valid"])
+            self.train_ds = self.dataset(self.root_data_dir, train_metadata_df, transforms=self.transforms["train"])
+            self.valid_ds = self.dataset(self.root_data_dir, valid_metadata_df, transforms=self.transforms["valid"])
 
         if stage == 'test' or stage is None:
             test_metadata_df = pd.read_csv(self.root_data_dir / "test.csv")
-            self.test_ds = ShipDataset(self.root_data_dir, test_metadata_df, transforms=self.transforms["test"])
+            self.test_ds = self.dataset(self.root_data_dir, test_metadata_df, transforms=self.transforms["test"])
 
     def train_dataloader(self):
         return DataLoader(self.train_ds, batch_size=self.batch_size, shuffle=True, num_workers=self.num_workers)
