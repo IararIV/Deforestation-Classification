@@ -30,12 +30,9 @@ def main():
     # Init our model
     print("Creating Lightning Module with timm model...")
     num_classes = 3
-    timm_model = timm.create_model('resnet34', pretrained=True, num_classes=num_classes)  #https://rwightman.github.io/pytorch-image-models/
-    for params in timm_model.parameters():
-        params.requires_grad = False
-    timm_model.fc.weight.requires_grad = True
-    timm_model.fc.bias.requires_grad = True
-    model = TimmModel(timm_model, num_classes, learning_rate=1e-2)
+    timm_model = timm.create_model('densenet201', pretrained=True, num_classes=num_classes)  #https://rwightman.github.io/pytorch-image-models/
+    timm_model.classifier = nn.Linear(1923, 3) 
+    model = TimmModel(timm_model, num_classes, learning_rate=1e-3)
     print("Done!")
 
     # Initialize wandb logger
@@ -46,8 +43,9 @@ def main():
     # Initialize callbacks
     callbacks = [
         #EarlyStopping(monitor="val_loss", min_delta=0.00, patience=3, verbose=False, mode="max"),
+        LearningRateMonitor(),
         ImagePredictionLogger(val_samples),
-        ModelCheckpoint(dirpath="./checkpoints", monitor="val_loss", filename="ship-{epoch:02d}-{val_loss:.2f}")
+        ModelCheckpoint(dirpath="./checkpoints", monitor="val_f_score", filename="ship-{epoch:02d}-{val_f_score:.2f}")
     ]
 
     # Initialize a trainer
