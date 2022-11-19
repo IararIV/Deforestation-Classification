@@ -1,11 +1,11 @@
 import pytorch_lightning as pl
 import timm
 import wandb
-from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
+from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning.loggers import WandbLogger
 
 from src.callbacks.callbacks import ImagePredictionLogger
-from src.data.datamodule import ShipDataModule
+from src.data.datamodule import DataModule
 from src.models.timm import TimmModel
 from src.transforms.transforms import train_transforms, valid_transforms, test_transforms
 from src.utils import lr_find
@@ -20,7 +20,7 @@ def main():
         }
 
     print("Initializing DataModule...")
-    dm = ShipDataModule(root_data_dir="./data/deforest/", batch_size=8)  #transforms=transforms)
+    dm = DataModule(root_data_dir="./data/deforest/", batch_size=8, transforms=transforms)
     dm.setup()
     print("Done!")
 
@@ -40,7 +40,7 @@ def main():
 
     # Initialize wandb logger
     print("Initializing Wandb...")
-    wandb_logger = False #WandbLogger(project='Deforestation-Classification', job_type='train')
+    wandb_logger = WandbLogger(project='Deforestation-Classification', job_type='train')
     print("Done!")
 
     # Initialize callbacks
@@ -53,7 +53,7 @@ def main():
     # Initialize a trainer
     print("Initializing trainer...")
     trainer = pl.Trainer(max_epochs=30,
-                         gpus=1,
+                         gpus=0,
                          logger=wandb_logger,
                          callbacks=callbacks,
                          enable_progress_bar=True)
@@ -61,7 +61,7 @@ def main():
 
     # Find lr
     print("Finding optimal lr...")
-    #lr_find(trainer, model, dm)
+    lr_find(trainer, model, dm)
     print("Done!")
 
     # Train the model ⚡🚅⚡

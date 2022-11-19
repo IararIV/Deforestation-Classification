@@ -2,7 +2,6 @@ import pytorch_lightning as pl
 import torch
 import torch.nn.functional as F
 import torchmetrics
-import wandb
 
 
 class TimmModel(pl.LightningModule):
@@ -20,6 +19,7 @@ class TimmModel(pl.LightningModule):
 
         self.loss = F.cross_entropy
         self.accuracy = torchmetrics.Accuracy(num_classes=num_classes)
+        self.f_score = torchmetrics.F1Score(num_classes=num_classes, average='macro')
 
     def forward(self, x):
         # TODO: implement fastai model structure: backbone --> head so we can use self.num_classes to set the head output
@@ -34,13 +34,10 @@ class TimmModel(pl.LightningModule):
         # training metrics
         preds = torch.argmax(logits, dim=1)
         acc = self.accuracy(preds, target)
+        f_score = self.f_score(preds, target)
         self.log('train_loss', loss, on_step=True, logger=True)
         self.log('train_acc', acc, on_epoch=True, logger=True)
-        self.log('conf_matrix', wandb.plot.confusion_matrix(probs=None,
-                                                            preds=preds.cpu(), y_true=target.cpu(),
-                                                            class_names=["Plantation", "Grassland",
-                                                                         "Smallholder Agriculture"]))
-
+        self.log('train_f_score', f_score, on_epoch=True, logger=True)
         return loss
 
     def validation_step(self, batch, batch_idx):
@@ -51,13 +48,10 @@ class TimmModel(pl.LightningModule):
         # validation metrics
         preds = torch.argmax(logits, dim=1)
         acc = self.accuracy(preds, target)
+        f_score = self.f_score(preds, target)
         self.log('val_loss', loss, on_step=True, logger=True)
         self.log('val_acc', acc, on_epoch=True, logger=True)
-        self.log('conf_matrix', wandb.plot.confusion_matrix(probs=None,
-                                                            preds=preds.cpu(), y_true=target.cpu(),
-                                                            class_names=["Plantation", "Grassland",
-                                                                         "Smallholder Agriculture"]))
-
+        self.log('val_f_score', f_score, on_epoch=True, logger=True)
         return loss
 
     def test_step(self, batch, batch_idx):
