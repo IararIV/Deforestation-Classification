@@ -9,14 +9,17 @@ class ImagePredictionLogger(pl.Callback):
         self.max_num_samples = max_num_samples
         self.val_images = val_samples["image"]
         self.val_labels = val_samples["target"]
+        self.val_metadata = val_samples["metadata"]
 
     def on_validation_epoch_end(self, trainer, pl_module):
         if trainer.logger:
             # Bring the tensors to CPU
             val_images = self.val_images.to(device=pl_module.device)
             val_labels = self.val_labels.to(device=pl_module.device)
+            val_metadata = self.val_metadata.to(device=pl_module.device)
+
             # Get model prediction
-            logits = pl_module(val_images)
+            logits = pl_module(val_images, val_metadata)
             preds = torch.argmax(logits, -1)
             # Log the images as wandb Image
             trainer.logger.experiment.log({

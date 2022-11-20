@@ -21,14 +21,18 @@ class TimmModel(pl.LightningModule):
         self.accuracy = torchmetrics.Accuracy(num_classes=num_classes)
         self.f_score = torchmetrics.F1Score(num_classes=num_classes, average='macro')
 
-    def forward(self, x):
+    def forward(self, x, metadata):
         # TODO: implement fastai model structure: backbone --> head so we can use self.num_classes to set the head output
-        output = self.model(x)
-        return output
+        # output = self.model(x)
+        x = self.model.features(x)
+        x = self.model.global_pool(x)
+        x = torch.cat((x, metadata), dim=1)
+        x = self.model.classifier(x)
+        return x
 
     def training_step(self, batch, batch_idx):
-        images, target = batch["image"], batch["target"]
-        logits = self.forward(images)
+        images, target, metadata = batch["image"], batch["target"], batch["metadata"]
+        logits = self.forward(images, metadata)
         loss = self.loss(logits, target)
 
         # training metrics
@@ -41,8 +45,8 @@ class TimmModel(pl.LightningModule):
         return loss
 
     def validation_step(self, batch, batch_idx):
-        images, target = batch["image"], batch["target"]
-        logits = self.forward(images)
+        images, target, metadata = batch["image"], batch["target"], batch["metadata"]
+        logits = self.forward(images, metadata)
         loss = self.loss(logits, target)
 
         # validation metrics
@@ -55,8 +59,8 @@ class TimmModel(pl.LightningModule):
         return loss
 
     def test_step(self, batch, batch_idx):
-        images, target = batch["image"], batch["target"]
-        logits = self.forward(images)
+        images, target, metadata = batch["image"], batch["target"], batch["metadata"]
+        logits = self.forward(images, metadata)
         loss = self.loss(logits, target)
 
         # test metrics
@@ -68,5 +72,5 @@ class TimmModel(pl.LightningModule):
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
-        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=250, gamma=0.05)
+        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=8, gamma=0.1, verbose=True)
         return {"optimizer": optimizer, "lr_scheduler": scheduler}

@@ -6,7 +6,7 @@ import pytorch_lightning as pl
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader
 
-from src.data.dataset import ShipDataset, DeforestDataset
+from src.data.dataset import DeforestDataset
 
 
 class DataModule(pl.LightningDataModule):
@@ -17,7 +17,7 @@ class DataModule(pl.LightningDataModule):
         self.batch_size = batch_size
         self.num_workers = num_workers
 
-        self.dataset = DeforestDataset  #ShipDataset
+        self.dataset = DeforestDataset
         self.transforms = transforms
 
     def prepare_data(self):

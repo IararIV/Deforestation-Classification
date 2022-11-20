@@ -15,7 +15,7 @@ from torchvision import transforms
 train_transforms = transforms.Compose([
                                     transforms.RandomVerticalFlip(0.5),
                                     transforms.RandomHorizontalFlip(0.5),
-                                    #transforms.RandomEqualize(),
+                                    #transforms.RandomEqualize(0.1),
                                     #transforms.RandomAutocontrast(),
                                     transforms.Resize(224),
                                     #transforms.RandomCrop(224),
